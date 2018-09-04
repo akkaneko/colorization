@@ -60,7 +60,7 @@ class BaseDataset():
 
 
 class Cifar10Dataset(BaseDataset):
-    def __init__(self, path, training=True:
+    def __init__(self, path, training=True):
         super(Cifar10Dataset, self).__init__('Cifar_10', path, training)
 
     def load(self):
