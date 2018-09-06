@@ -3,6 +3,7 @@ import numpy as np
 from data import Cifar10Dataset
 from DCGAN import Generator, Discriminator
 from abc import abstractmethod
+import matplotlib
 import matplotlib.pyplot as plt
 from PIL import Image
 
