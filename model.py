@@ -24,8 +24,8 @@ class Colorize(object):
         self.raw_images = tf.placeholder(tf.float32, [None, None, None, 3])
         self.bw_images = tf.image.rgb_to_grayscale(self.raw_images)
 
-        lr = params['lr']
-        thresh = params['threshold']
+        lr = self.params['lr']
+        thresh = self.params['threshold']
 
         ## Center around 0 ##
         self.color_images =  (self.raw_images / 255.0) * 2 - 1
@@ -33,23 +33,22 @@ class Colorize(object):
         generator = self.create_generator()
         discriminator = self.create_discriminator()
 
-
         ## Generated image: [batch_size, h, w, channels]
         self.colorized = generator.generate(
             self.bw_images, 
-            kernel_size = params['kernel_size']
+            kernel_size = self.params['kernel_size']
         )
 
         ## Discriminated logits: [?, ?, ?, ?, 1]
         disc_false = discriminator.discriminate(
             tf.concat(axis = 3, values = [self.colorized, self.bw_images]),
-            kernel_size = params['kernel_size']
+            kernel_size = self.params['kernel_size']
         )
 
         ## Discriminated logits: [?, ?, ?, ?, 1]
         disc_true  = discriminator.discriminate(
             tf.concat(axis = 3, values = [self.color_images, self.bw_images]),
-            kernel_size = params['kernel_size'],
+            kernel_size = self.params['kernel_size'],
             reuse = True)
 
         self.accuracy = self.calculate_accuracy(self.color_images, self.colorized, thresh)
@@ -110,16 +109,21 @@ class Colorize(object):
                     feed_dict = feed_dict
                 )
 
-                print "Accuracy: %f, GenLoss: %f, DisLoss: %f" % (acc, g_loss, d_loss)
-                if step % 100 == 0:
+                if step % 5 == 0:
+                    print "Step: %d Accuracy: %f, GenLoss: %f, DisLoss: %f" % (step, acc, g_loss, d_loss)
+
+                if step % 50 == 0:
                     self.sample(feed_dict)
 
     def sample(self, feed_dict):
-        fake_image = self.sess.run([self.colorized], feed_dict)
+        fake_image, real_image = self.sess.run([self.colorized, self.color_images], feed_dict)
         image = (np.squeeze(np.array(fake_image)) + 1) / 2
-        print image.shape
+        original = (np.squeeze(np.array(real_image)) + 1) / 2
         image = Image.fromarray((image[0] * 255).astype(np.uint8))
         plt.imshow(image, interpolation='none')
+        plt.show()
+        original = Image.fromarray((original[0] * 255).astype(np.uint8))
+        plt.imshow(original, interpolation='none')
         plt.show()
 
 
@@ -165,16 +169,3 @@ class Color_CIFAR(Colorize):
         
         return Discriminator(params)
 
-params = {
-    'lr' : 0.001,
-    'threshold': 0.02,
-    'kernel_size': 2,
-    'training': True, 
-    'num_epochs': 3,
-    'batch_size': 64}
-
-with tf.Session() as sess:
-    c = Color_CIFAR('cifar-10-batches-py', sess, params)
-    c.build_graph()
-    sess.run(tf.global_variables_initializer())
-    c.train()
