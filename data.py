@@ -2,14 +2,15 @@ import tensorflow as tf
 import numpy as np
 import pickle
 from abc import abstractmethod
+from scipy.misc import imread
 
-class BaseDataset():
+class BaseDataset(object):
 
     def __init__(self, name, path, training):
         self.training = training
         self.name = name
         self.path = path
-        self.data = []
+        self._data = []
         
 
     def __len__(self):
@@ -68,8 +69,8 @@ class Cifar10Dataset(BaseDataset):
         if self.training:
             for i in range(1, 6):
                 filename = '{}/data_batch_{}'.format(self.path, i)
-                with open(file, 'rb') as fo:
-                    batch_data = pickle.load(fo, encoding='bytes')
+                with open(filename) as fo:
+                    batch_data = pickle.load(fo)
 
                 if len(data) > 0:
                     data = np.vstack((data, batch_data[b'data']))
@@ -78,7 +79,8 @@ class Cifar10Dataset(BaseDataset):
 
         else:
             filename = '{}/test_batch'.format(self.path)
-            batch_data = unpickle(filename)
+            with open(filename) as fo:
+                    batch_data = pickle.load(fo)
             data = batch_data[b'data']
 
         w = 32
@@ -88,3 +90,5 @@ class Cifar10Dataset(BaseDataset):
         data = np.dstack((data[:, :s], data[:, s:2 * s], data[:, 2 * s:]))
         data = data.reshape((-1, w, h, 3))
         return data
+
+

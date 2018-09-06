@@ -14,8 +14,7 @@ class Discriminator(object):
               num_filters and num_strides must be the same length. 
     
     Returns:
-    TensorFlow Tensor with shape [batch_size, 1], containing the score 
-    for an image being real for each input image.
+    Logits from Discriminator
     """
 
     def self.__init__(self, params):
@@ -131,41 +130,8 @@ class Generator(object):
 
             return output
 
-
-
-                
-
-            
-
-
-
-
-
         
 
-
-
-def generator(z):
-    """Generate images from a random noise vector.
-    
-    Inputs:
-    - z: TensorFlow Tensor of random noise with shape [batch_size, noise_dim]
-    
-    Returns:
-    TensorFlow Tensor of generated images, with shape [batch_size, 784].
-    """
-    with tf.variable_scope("generator"):
-        s1 = 7*7*128
-        fc1 = tf.layers.dense(z, 1024, activation = tf.nn.relu)
-        bn1 = tf.layers.batch_normalization(fc1)
-        fc2 = tf.layers.dense(bn1, s1, activation = tf.nn.relu)
-        bn2 = tf.layers.batch_normalization(fc2)
-        logits = tf.reshape(bn2, [-1, 7,7,128])
-        conv1 =  tf.layers.conv2d_transpose(logits, 64, 4, strides = 2, activation = leaky_relu, padding = 'same')
-        bn3 = tf.layers.batch_normalization(conv1)
-        img =  tf.layers.conv2d_transpose(bn3, 1, 4, strides = 2, activation = tf.nn.tanh, padding = 'same')
-        img = tf.reshape(img, [-1, 784])
-        return img
 
 
 def gan_loss(logits_real, logits_fake):
