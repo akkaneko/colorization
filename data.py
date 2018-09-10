@@ -30,21 +30,23 @@ class BaseDataset(object):
         return img
 
     def generator(self, batch_size):
-        while True:
-            start = 0
-            total = len(self)
+        start = 0
+        total = len(self)
 
-            while start < total:
-                end = np.min([start + batch_size, total])
-                items = []
+        while start < total:
+            end = np.min([start + batch_size, total])
+            items = []
+            np.random.shuffle
+            
+            np.random.shuffle(self._data)
 
-                for ix in range(start, end):
-                    item = self[ix]
-                    if item is not None:
-                        items.append(item)
+            for ix in range(start, end):
+                item = self[ix]
+                if item is not None:
+                    items.append(item)
 
-                start = end
-                yield np.array(items)
+            start = end
+            yield np.array(items)
 
     @property
     def data(self):

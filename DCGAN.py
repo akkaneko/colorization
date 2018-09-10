@@ -47,7 +47,7 @@ class Discriminator(object):
                     )
 
                 if batch_norm:
-                    conv = tf.layers.batch_normalization(conv)
+                    conv = tf.layers.batch_normalization(conv, training = True)
                 
                 conv = tf.nn.leaky_relu(conv)
 
@@ -63,6 +63,8 @@ class Discriminator(object):
                 strides = 1,
                 padding = "same"
             )
+            
+            self.var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
             return logits
 
@@ -83,7 +85,7 @@ class Generator(object):
 
         self.num_channels = num_channels 
 
-    def generate(self, inputs, kernel_size = None, reuse = False):
+    def generate(self, inputs, kernel_size = None, reuse = tf.AUTO_REUSE):
         
         with tf.variable_scope("generator", reuse = reuse):
 
@@ -104,7 +106,7 @@ class Generator(object):
                     padding = "same"
                     )
 
-                conv = tf.layers.batch_normalization(conv)
+                conv = tf.layers.batch_normalization(conv, training = True)
                 conv = tf.nn.leaky_relu(conv)
 
                 skip_layers.append(conv)
@@ -124,7 +126,7 @@ class Generator(object):
                 padding = "same"
                 )
 
-                conv = tf.layers.batch_normalization(conv)
+                conv = tf.layers.batch_normalization(conv, training = True)
                 conv = tf.nn.relu(conv)
 
                 if cur_dropout != 0:
@@ -140,6 +142,8 @@ class Generator(object):
                 activation=tf.nn.tanh,
                 padding = "same"
             )
+            
+            self.var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
 
             return output
 
