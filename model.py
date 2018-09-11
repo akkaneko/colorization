@@ -29,8 +29,8 @@ class Colorize(object):
         self.raw_images = tf.placeholder(tf.float32, [None, None, None, 3])
         self.bw_images = tf.image.rgb_to_grayscale(self.raw_images)
 
-        #lr = tf.train.exponential_decay(self.params['lr'], self.global_step, 0.1, 5e5)
-        lr = self.params['lr']
+        lr = tf.train.exponential_decay(self.params['lr'], self.global_step, 0.1, 5e5)
+        #lr = self.params['lr']
         thresh = self.params['threshold']
 
         ## Center around 0 ##
@@ -86,11 +86,14 @@ class Colorize(object):
         pred = predr * predg * predb
 
         return tf.reduce_mean(pred)
+    
 
 
     def gan_loss(self, logits_real, logits_fake):
 
-        G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = tf.ones_like(logits_fake), logits = logits_fake))        
+        G_loss1 = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = tf.ones_like(logits_fake), logits = logits_fake))        
+        G_loss2 = tf.reduce_mean(tf.abs(self.color_images - self.colorized)) * self.params['l1']
+        
         D_loss1 = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = tf.ones_like(logits_real) * 0.9, logits = logits_real)) 
         tf.summary.scalar('D_loss_real', D_loss1)
         
@@ -98,13 +101,15 @@ class Colorize(object):
         tf.summary.scalar('D_loss_fake', D_loss2)
         
         D_loss = D_loss1 + D_loss2
+        G_loss = G_loss1 + G_loss2 
 
         return D_loss, G_loss
 
 
     def train(self):
         epochs = self.params['num_epochs']
-        writer = tf.summary.FileWriter('./graphs/1', self.sess.graph)
+        writer = tf.summary.FileWriter(self.params['tb_path'], self.sess.graph)
+        show_sample = self.params['sample']
 
         for i in range(epochs):
 
@@ -131,10 +136,12 @@ class Colorize(object):
                     writer.add_summary(summ, self.globalstep)
 
 
-                if step % 100 == 0:
+                if (show_sample) & (step % 100 == 0):
                     self.sample(feed_dict)
           
             self.saver.save(self.sess, self.params['save_path'], write_meta_graph=False)
+            
+        
             
         
     def load(self):
@@ -192,7 +199,7 @@ class Color_CIFAR(Colorize):
 
         dec_filters = [512, 256, 128, 64]
         dec_strides = [2, 2, 2, 2]
-        dec_dropout = [0.5, 0.5, 0, 0]
+        dec_dropout = [0.5, 0, 0, 0]
         decode_params = (dec_filters, dec_strides, dec_dropout)
 
         return Generator(encode_params, decode_params)

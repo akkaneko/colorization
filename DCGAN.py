@@ -28,7 +28,7 @@ class Discriminator(object):
 
         with tf.variable_scope("discriminator", reuse = reuse):
 
-            conv = inputs
+            conv = inputs + tf.random_normal(shape=tf.shape(inputs), mean=0.0, stddev=0.1, dtype=tf.float32)
 
             for ind in range(len(self.num_filters)):
 
